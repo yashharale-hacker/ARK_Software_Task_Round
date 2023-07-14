@@ -1,0 +1,2 @@
+ROS-Compute-Image:robot_pkg
+-DCATKIN_DEVEL_PREFIX=/home/yashharale/Desktop/ARK_Task_Round/task4_ws/devel -DCMAKE_INSTALL_PREFIX=/home/yashharale/Desktop/ARK_Task_Round/task4_ws/install -G Unix Makefiles

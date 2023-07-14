@@ -1,0 +1,8 @@
+prefix=/home/yashharale/Desktop/ARK_Task_Round/task4_ws/install
+
+Name: robot_pkg
+Description: Description of robot_pkg
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
