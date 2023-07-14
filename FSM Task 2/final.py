@@ -1,3 +1,4 @@
+# using functions seperately
 def print_list_of_juices():
     print("\n\tVending Machine Drinks List")
     print("Sl. No.\t Drink\t\t\t Code\tCost")
@@ -27,14 +28,19 @@ class Transition:
 class FSM:
     """Model fo Finite State Machine"""
 
-    def __init__(self, states=[], inputs_allowed=[], accepting_states=[], initial_state='', no_of_cans = 0, COST = []):
+    def __init__(self, states=[], inputs_allowed=[], accepting_states=[], initial_state='', no_of_cans=0, COST=[]):
+
         self.states = states
         self.inputs_allowed = inputs_allowed
         self.accepting_states = accepting_states
         self.initial_state = initial_state
-        self.quantity = [no_of_cans * 8, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans]
+        self.quantity = [no_of_cans * 8, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans,
+                         no_of_cans, no_of_cans]
         self.no_of_cans = no_of_cans
         self.COST = COST
+        self.drink = None
+        self.i = None
+        self.current_state = None
         self.valid_transitions = False
 
     def add_transitions(self, transitions=[]):
@@ -59,91 +65,106 @@ class FSM:
             return None
         return None
 
-    def accepts(self, code):
-        # Process an input stream to determine if the FSM will accept it
+    def __return__(self, return_amount):
+        self.current_state = self.__accept__(self.current_state, 1)
+        # print(f"Ending state is {current_state}")
+
+        if return_amount < 0:
+            print("Insufficient balance\nTransaction Failure")
+            print(f"Returning cash of {cash} bucks.")
+            return False
+        self.quantity[self.i] = self.quantity[self.i] - 1
+        self.quantity[0] = self.quantity[0] - 1
+        if return_amount > 0:
+            print(f"Returning the change of {return_amount} bucks")
+        print(f"Dispatching Drink can of {self.drink}")
+        # print("See you soon")
+        return True
+
+    def cash_in_and_return(self):
+        cash = int(input("Please Enter the amount: "))
+        self.current_state = self.__accept__(self.current_state, 1)
+        Return = cash - self.COST[self.i - 1]
+        # print(f"Current state is {current_state}")
+        if self.current_state is None:
+            return False
+        return self.__return__(Return)
+
+    def refilling(self):
+        print("All cans SOLD OUT. Needs REFILL")
+        self.current_state = self.__accept__(self.current_state, 0)
+        # print(f"Current state is {current_state}")
+        print("User needs to type REFILL to replenish stock and continue transactions")
+
+        while True:
+            ref = input("Enter correct input: ")
+            self.current_state = self.__accept__(self.current_state, ref)
+            # print(f"Ending state is {current_state}")
+            if self.current_state == 'idle':
+                print("Refilling the Stocks of Vending Machine...")
+                self.quantity[0] = self.no_of_cans * 8
+                for j in range(1, 9):
+                    self.quantity[j] = self.no_of_cans
+                return self.current_state in self.accepting_states
+
+    def vending_machine(self, code):
+
         # Check if we have transitions
-        global i, cash, Return, current_state
+        global cash, Return
         if not self.valid_transitions:
             print("Cannot process sequence without valid transitions")
 
         # print(f"Starting at {self.initial_state}")
-        # When an empty sequence provided, we simply check if the initial state is an accepted one
+        # we simply check if the initial state is an accepted one
 
         if code is None:
             return self.initial_state in self.accepting_states
 
         # Let's process the initial state
-        current_state = self.__accept__(self.initial_state, code)
+        self.current_state = self.__accept__(self.initial_state, code)
         # print(f"Current state is {current_state}")
-        if current_state is None:
+        if self.current_state is None:
             return False
-        drink = current_state
+        self.drink = self.current_state
 
         for i in range(1, 9):
-            if current_state is states[i]:
-                if self.quantity[i] == 0 :
-                    print(f"All cans of {current_state} are sold out. No cans available")
-                    current_state = self.__accept__(current_state, 0)
+            if self.current_state is states[i]:
+                self.i = i
+                if self.quantity[i] == 0:
+                    print(f"All cans of {self.current_state} are sold out. No cans available")
+                    self.current_state = self.__accept__(self.current_state, 0)
                     # print(f"Current state is {current_state}")
                     if self.quantity[0] == 0:
-                        print(f"All cans SOLD OUT. Needs REFILL")
-                        current_state = self.__accept__(current_state, 0)
-                        # print(f"Current state is {current_state}")
-                        print("User needs to type REFILL to replenish stock and continue transactions")
+                        return self.refilling()
+
                     else:
                         print("Choose other Drink which are available")
-                        current_state = self.__accept__(current_state, 1)
+                        self.current_state = self.__accept__(self.current_state, 1)
                         # print(f"Current state is {current_state}")
                         return True
-                elif self.quantity[i] > 0 :
-                    cash = int(input("Please Enter the amount: "))
-                    current_state = self.__accept__(current_state, 1)
-                    Return = cash - self.COST[i - 1]
-                    # print(f"Current state is {current_state}")
+
+                elif self.quantity[i] > 0:
+                    return self.cash_in_and_return()
+
                 else:
                     print("Wrong Number of Cans in data")
                     return False
-                break
+                # break
 
-        if current_state is None:
-            return False
-
-        if current_state == 'Cash in and Return':
-            current_state = self.__accept__(current_state, 1)
-            # print(f"Current state is {current_state}")
-            if Return < 0:
-                print("Insufficient balance\nTransaction Failure")
-                print(f"Returning cash of {cash} bucks.")
-                return False
-            self.quantity[i] = self.quantity[i] - 1
-            self.quantity[0] = self.quantity[0] - 1
-            if Return > 0:
-                print(f"Returning the change of {Return} bucks")
-            print(f"Dispaching Drink can of {drink}")
-            # print("See you soon")
-            return True
-
-        while True:
-            ref = input("Enter correct input: ")
-            current_state = self.__accept__(current_state, ref)
-            # print(f"Current state is {current_state}")
-            if current_state == 'idle':
-                self.quantity[0] = self.no_of_cans * 8
-                for i in range(1, 9):
-                    self.quantity[i] = self.no_of_cans
-                print("Refilling the Vending Machine...")
-                return current_state in self.accepting_states
+        # if self.current_state is None:
+        #     return False
 
 
 """this condition runs only the code inside the if statement"""
 if __name__ == '__main__':
 
-    no_of_cans = 0
+    no_of_cans = 50
     # total_cans = no_of_cans * 8
 
     # Setting up FSM
     # Set of states
-    states = ['idle', 'Pepsi', 'Mountain Dew', 'Dr. Pepper', 'Coke', 'Gatorade', 'Diet Coke', 'Minute Maid', 'Tropicana', 'check_all', 'Refill', 'Cash in and Return', 'Error']
+    states = ['idle', 'Pepsi', 'Mountain Dew', 'Dr. Pepper', 'Coke', 'Gatorade', 'Diet Coke', 'Minute Maid',
+              'Tropicana', 'check_all', 'Refill', 'Cash in and Return', 'Error']
     # Set of allowed inputs
     inputs_allowed = ['PEPS', 'MDEW', 'DPEP', 'COKE', 'GATO', 'DCOK', 'MINM', 'TROP', 0, 1, 'REFILL']
 
@@ -187,13 +208,18 @@ if __name__ == '__main__':
     ter_trans11 = Transition('Cash in and Return', 1, 'idle')
     quad_trans1 = Transition('Refill', 'REFILL', 'idle')
 
-    transitions = [prim_trans1, prim_trans2, prim_trans3, prim_trans4, prim_trans5, prim_trans6, prim_trans7, prim_trans8, sec_trans1, sec_trans2, sec_trans3, sec_trans4, sec_trans5, sec_trans6, sec_trans7, sec_trans8, sec_trans11, sec_trans12, sec_trans13, sec_trans14, sec_trans15, sec_trans16, sec_trans17, sec_trans18, ter_trans1, ter_trans2, ter_trans11, quad_trans1]
+    transitions = [prim_trans1, prim_trans2, prim_trans3, prim_trans4, prim_trans5, prim_trans6, prim_trans7,
+                   prim_trans8, sec_trans1, sec_trans2, sec_trans3, sec_trans4, sec_trans5, sec_trans6, sec_trans7,
+                   sec_trans8, sec_trans11, sec_trans12, sec_trans13, sec_trans14, sec_trans15, sec_trans16,
+                   sec_trans17, sec_trans18, ter_trans1, ter_trans2, ter_trans11, quad_trans1]
 
     # Verify and add them to the FSM
     fsm.add_transitions(transitions)
 
+    # Vending Machine will continue to run in loop
     while True:
         print_list_of_juices()
         Code = input("Enter Code of Drink you want to purchase: ")
-        Status = fsm.accepts(Code)
+        # Execution of function starts
+        Status = fsm.vending_machine(Code)
         print("ERROR!!!") if Status is False else print("Transaction Complete\nTHANK YOU")

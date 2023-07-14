@@ -8,7 +8,7 @@ def print_list_of_juices():
     print("5\t\t Gatorade\t\t GATO\t 20")
     print("6\t\t Diet Coke\t\t DCOK\t 30")
     print("7\t\t Minute Maid\t MINM\t 25")
-    print("8\t\t Tropicana\t\t TROP\t 30")
+    print("8\t\t Tropicana\t\t TROP\t 30\n")
 
 
 class Transition:
@@ -25,18 +25,20 @@ class Transition:
 
 
 class FSM:
-    """A basic model of computation"""
+    """Model fo Finite State Machine"""
 
-    def __init__(self, states=[], inputs_allowed=[], accepting_states=[], initial_state='', quantity=[]):
+    def __init__(self, states=[], inputs_allowed=[], accepting_states=[], initial_state='', no_of_cans = 0, COST = []):
         self.states = states
         self.inputs_allowed = inputs_allowed
         self.accepting_states = accepting_states
         self.initial_state = initial_state
-        self.quantity = quantity
+        self.quantity = [no_of_cans * 8, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans]
+        self.no_of_cans = no_of_cans
+        self.COST = COST
         self.valid_transitions = False
 
     def add_transitions(self, transitions=[]):
-        """Before we use a list of transitions, verify they only apply to our states"""
+        """Before we use a list of transitions, verifying that they only apply to our states"""
         for transition in transitions:
             if transition.current_state not in self.states:
                 print(f"Invalid transition. {transition.current_state} is not a valid state.")
@@ -49,7 +51,6 @@ class FSM:
 
     def __accept__(self, current_state, state_input):
         """Looks to see if the input for the given state matches a transition rule"""
-        # If the input is valid in our alphabet
         if state_input in self.inputs_allowed:
             for rule in self.transitions:
                 if rule.match(current_state, state_input):
@@ -58,52 +59,103 @@ class FSM:
             return None
         return None
 
-    def accepts(self, sequence):
+    def accepts(self, code):
         # Process an input stream to determine if the FSM will accept it
         # Check if we have transitions
+        global i, cash, Return, current_state
         if not self.valid_transitions:
             print("Cannot process sequence without valid transitions")
 
-        print(f"Starting at {self.initial_state}")
+        # print(f"Starting at {self.initial_state}")
         # When an empty sequence provided, we simply check if the initial state is an accepted one
 
-        if len(sequence) == 0:
+        if code is None:
             return self.initial_state in self.accepting_states
 
         # Let's process the initial state
-        current_state = self.__accept__(self.initial_state, sequence[0])
+        current_state = self.__accept__(self.initial_state, code)
+        # print(f"Current state is {current_state}")
+        if current_state is None:
+            return False
+        drink = current_state
+
+        for i in range(1, 9):
+            if current_state is states[i]:
+                if self.quantity[i] == 0 :
+                    print(f"All cans of {current_state} are sold out. No cans available")
+                    current_state = self.__accept__(current_state, 0)
+                    # print(f"Current state is {current_state}")
+                    if self.quantity[0] == 0:
+                        print(f"All cans SOLD OUT. Needs REFILL")
+                        current_state = self.__accept__(current_state, 0)
+                        # print(f"Current state is {current_state}")
+                        print("User needs to type REFILL to replenish stock and continue transactions")
+                    else:
+                        print("Choose other Drink which are available")
+                        current_state = self.__accept__(current_state, 1)
+                        # print(f"Current state is {current_state}")
+                        return True
+                elif self.quantity[i] > 0 :
+                    cash = int(input("Please Enter the amount: "))
+                    current_state = self.__accept__(current_state, 1)
+                    Return = cash - self.COST[i - 1]
+                    # print(f"Current state is {current_state}")
+                else:
+                    print("Wrong Number of Cans in data")
+                    return False
+                break
+
         if current_state is None:
             return False
 
-        # Continue with the rest of the sequence
-        for state_input in sequence[1:]:
-            print(f"Current state is {current_state}")
-            current_state = self.__accept__(current_state, state_input)
-            if current_state is None:
+        if current_state == 'Cash in and Return':
+            current_state = self.__accept__(current_state, 1)
+            # print(f"Current state is {current_state}")
+            if Return < 0:
+                print("Insufficient balance\nTransaction Failure")
+                print(f"Returning cash of {cash} bucks.")
                 return False
+            self.quantity[i] = self.quantity[i] - 1
+            self.quantity[0] = self.quantity[0] - 1
+            if Return > 0:
+                print(f"Returning the change of {Return} bucks")
+            print(f"Dispaching Drink can of {drink}")
+            # print("See you soon")
+            return True
 
-        print(f"Ending state is {current_state}")
-        # Check if the state we've transitioned to is an accepting state
-        return current_state in self.accepting_states
+        while True:
+            ref = input("Enter correct input: ")
+            current_state = self.__accept__(current_state, ref)
+            # print(f"Current state is {current_state}")
+            if current_state == 'idle':
+                self.quantity[0] = self.no_of_cans * 8
+                for i in range(1, 9):
+                    self.quantity[i] = self.no_of_cans
+                print("Refilling the Vending Machine...")
+                return current_state in self.accepting_states
 
 
 """this condition runs only the code inside the if statement"""
 if __name__ == '__main__':
-    print_list_of_juices()
+
     no_of_cans = 50
+    # total_cans = no_of_cans * 8
 
     # Setting up FSM
     # Set of states
-    states = ['idle', 'Pepsi', 'Mountain Dew', 'Dr. Pepper', 'Coke', 'Gatorade', 'Diet Coke', 'Minute Maid', 'Tropicana', 'check_all', 'Refill', 'Return1', 'Return2', 'Return3', 'Return4', 'Return5', 'Return6', 'Return7', 'Return8', 'State 1', 'State 2', 'Error']
+    states = ['idle', 'Pepsi', 'Mountain Dew', 'Dr. Pepper', 'Coke', 'Gatorade', 'Diet Coke', 'Minute Maid', 'Tropicana', 'check_all', 'Refill', 'Cash in and Return', 'Error']
     # Set of allowed inputs
-    inputs_allowed = ['PEPS', 'MDEW', 'DPEP', 'COKE', 'GATO', 'DCOK', 'MINM', 'TROP', 0, 1]
+    inputs_allowed = ['PEPS', 'MDEW', 'DPEP', 'COKE', 'GATO', 'DCOK', 'MINM', 'TROP', 0, 1, 'REFILL']
+
+    # Set of Constant Cost of Cans
+    COST = [30, 30, 50, 20, 20, 30, 25, 30]
     # Set of states that machine will accept its input on if it has fully consumed the input and has ended execution
     accepting_states = ['idle']
     # The initial state
     initial_state = 'idle'
     # Initializing each variety of juice
-    quantity = [no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans]
-    fsm = FSM(states, inputs_allowed, accepting_states, initial_state, quantity)
+    # quantity = [total_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans, no_of_cans]
+    fsm = FSM(states, inputs_allowed, accepting_states, initial_state, no_of_cans, COST)
 
     # Creating the set of all possible transitions
     prim_trans1 = Transition('idle', 'PEPS', 'Pepsi')
@@ -122,32 +174,26 @@ if __name__ == '__main__':
     sec_trans6 = Transition('Diet Coke', 0, 'check_all')
     sec_trans7 = Transition('Minute Maid', 0, 'check_all')
     sec_trans8 = Transition('Tropicana', 0, 'check_all')
-    sec_trans11 = Transition('Pepsi', 1, 'idle')
-    sec_trans12 = Transition('Mountain Dew', 1, 'idle')
-    sec_trans13 = Transition('Dr. Pepper', 1, 'idle')
-    sec_trans14 = Transition('Coke', 1, 'idle')
-    sec_trans15 = Transition('Gatorade', 1, 'idle')
-    sec_trans16 = Transition('Diet Coke', 1, 'idle')
-    sec_trans17 = Transition('Minute Maid', 1, 'idle')
-    sec_trans18 = Transition('Tropicana', 1, 'idle')
+    sec_trans11 = Transition('Pepsi', 1, 'Cash in and Return')
+    sec_trans12 = Transition('Mountain Dew', 1, 'Cash in and Return')
+    sec_trans13 = Transition('Dr. Pepper', 1, 'Cash in and Return')
+    sec_trans14 = Transition('Coke', 1, 'Cash in and Return')
+    sec_trans15 = Transition('Gatorade', 1, 'Cash in and Return')
+    sec_trans16 = Transition('Diet Coke', 1, 'Cash in and Return')
+    sec_trans17 = Transition('Minute Maid', 1, 'Cash in and Return')
+    sec_trans18 = Transition('Tropicana', 1, 'Cash in and Return')
     ter_trans1 = Transition('check_all', 1, 'idle')
     ter_trans2 = Transition('check_all', 0, 'Refill')
+    ter_trans11 = Transition('Cash in and Return', 1, 'idle')
     quad_trans1 = Transition('Refill', 'REFILL', 'idle')
 
-    transitions = [prim_trans1, prim_trans2, prim_trans3, prim_trans4, prim_trans5, prim_trans6, prim_trans7, prim_trans8, sec_trans1, sec_trans2, sec_trans3, sec_trans4, sec_trans5, sec_trans6, sec_trans7, sec_trans8, sec_trans11, sec_trans12, sec_trans13, sec_trans14, sec_trans15, sec_trans16, sec_trans17, sec_trans18, ter_trans1, ter_trans2, quad_trans1]
+    transitions = [prim_trans1, prim_trans2, prim_trans3, prim_trans4, prim_trans5, prim_trans6, prim_trans7, prim_trans8, sec_trans1, sec_trans2, sec_trans3, sec_trans4, sec_trans5, sec_trans6, sec_trans7, sec_trans8, sec_trans11, sec_trans12, sec_trans13, sec_trans14, sec_trans15, sec_trans16, sec_trans17, sec_trans18, ter_trans1, ter_trans2, ter_trans11, quad_trans1]
 
     # Verify and add them to the FSM
     fsm.add_transitions(transitions)
 
-    # Now that our FSM is correctly set up, we can give it input to process
-    # Let's transition the FSM to a green light
-    should_be_accepted = fsm.accepts([1, 0, 1, 0])
-    print(should_be_accepted)
-
-    # Let's transition the FSM to a red light
-    should_be_rejected_1 = fsm.accepts([1, 1, 1, 0])
-    print(should_be_rejected_1)
-
-    # Let's transition to yellow and give it bad input
-    should_be_rejected_2 = fsm.accepts([1, 0, 1, 0, 1, 0, 0])
-    print(should_be_rejected_2)
+    while True:
+        print_list_of_juices()
+        Code = input("Enter Code of Drink you want to purchase: ")
+        Status = fsm.accepts(Code)
+        print("ERROR!!!") if Status is False else print("Transaction Complete\nTHANK YOU")
