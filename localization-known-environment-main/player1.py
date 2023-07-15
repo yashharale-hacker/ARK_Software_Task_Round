@@ -26,8 +26,19 @@ def strategy():
     for (x, y) in zip(x_points, y_points):
         boxes.append((x, y, x + w, y + h))
 
+    # for (x1, y1, x2, y2) in boxes:
+    #     cv2.rectangle(maze, (x1, y1), (x2, y2), (0, 0, 0), 2)
+
+    # Center coordinates
+    center_coordinates = []
+
     for (x1, y1, x2, y2) in boxes:
         cv2.rectangle(maze, (x1, y1), (x2, y2), (0, 0, 0), 2)
+        current_position = ((x1 + x2) // 2, (y1 + y2) // 2)
+        center_coordinates.append(current_position)
+
+    for i, coordinate in enumerate(center_coordinates):
+        maze = cv2.circle(maze, coordinate, 5, (0, 0, 0), -1)
 
     cv2.imshow("maze", maze)
     cv2.imshow("surrounding", snapShot)
